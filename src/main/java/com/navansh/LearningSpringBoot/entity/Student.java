@@ -17,29 +17,28 @@ public class Student {
 
     @Column(unique = true, nullable = false)
     private String email;
-
-    // Explicit getters and setters
-    public Long getId() {
-        return Id;
-    }
-
-    public void setId(Long id) {
-        Id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
+    // Explicit getters and setters not requrieed
+//    public Long getId() {
+//        return Id;
+//    }
+//
+//    public void setId(Long id) {
+//        Id = id;
+//    }
+//
+//    public String getName() {
+//        return name;
+//    }
+//
+//    public void setName(String name) {
+//        this.name = name;
+//    }
+//
+//    public String getEmail() {
+//        return email;
+//    }
+//
+//    public void setEmail(String email) {
+//        this.email = email;
+//    }
 }
