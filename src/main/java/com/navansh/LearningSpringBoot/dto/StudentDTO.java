@@ -13,7 +13,7 @@ public class StudentDTO {
     private String name;
     private Long id;
     private String email;
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt=LocalDateTime.now();
 
 //    public StudentDTO(String name, Long id, String email) {
 //        this.name = name;
