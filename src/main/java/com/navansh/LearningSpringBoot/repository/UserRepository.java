@@ -8,6 +8,8 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
+
+    //herer for hte a custom query
     Optional<User> findByUsername(String username);
 }
 
