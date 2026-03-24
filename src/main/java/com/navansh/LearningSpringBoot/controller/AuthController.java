@@ -1,10 +1,10 @@
 package com.navansh.LearningSpringBoot.controller;
 
+import com.navansh.LearningSpringBoot.dao.UserDAO;
 import com.navansh.LearningSpringBoot.dto.LoginRequestDTO;
 import com.navansh.LearningSpringBoot.dto.LoginResponseDTO;
 import com.navansh.LearningSpringBoot.entity.User;
 import com.navansh.LearningSpringBoot.exception.BadRequestException;
-import com.navansh.LearningSpringBoot.repository.UserRepository;
 import com.navansh.LearningSpringBoot.utils.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -23,7 +23,7 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
-    private final UserRepository userRepository;
+    private final UserDAO userDAO;
     private final PasswordEncoder passwordEncoder;
 
     @PostMapping("/login")
@@ -33,7 +33,7 @@ public class AuthController {
                     new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
             );
 
-            User user = userRepository.findByUsername(request.getUsername())
+            User user = userDAO.findByUsername(request.getUsername())
                     .orElseThrow(() -> new BadRequestException("User not found"));
 
             String token = jwtUtil.generateToken(request.getUsername(), user.getRole());
@@ -45,7 +45,7 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody LoginRequestDTO request) {
-        if (userRepository.findByUsername(request.getUsername()).isPresent()) {
+        if (userDAO.existsByUsername(request.getUsername())) {
             throw new BadRequestException("Username already exists");
         }
 
@@ -54,7 +54,8 @@ public class AuthController {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole("ROLE_USER");
 
-        userRepository.save(user);
+        Long userId = userDAO.save(user);
+        user.setId(userId);
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new LoginResponseDTO("User registered successfully with username: " + request.getUsername()));
