@@ -1,12 +1,25 @@
 package com.navansh.LearningSpringBoot.repository;
 
 import com.navansh.LearningSpringBoot.entity.Student;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
-@Repository
-public interface StudentRepository extends JpaRepository<Student, Long> {
+public interface StudentRepository {
+    // Create
+    Student save(Student student);
+
+    // Read
+    List<Student> findAll();
+    Optional<Student> findById(Long id);
     Optional<Student> findByEmail(String email);
+
+    // Update
+    void update(Student student);
+
+    // Delete
+    void deleteById(Long id);
+
+    // Check existence
+    boolean existsById(Long id);
 }

@@ -1,6 +1,6 @@
 package com.navansh.LearningSpringBoot.security;
 
-import com.navansh.LearningSpringBoot.dao.UserDAO;
+import com.navansh.LearningSpringBoot.repository.UserRepository;
 import com.navansh.LearningSpringBoot.utils.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -23,7 +23,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtUtil jwtUtil;
-    private final UserDAO userDAO;
+    private final UserRepository userRepository;  // Use interface, not implementation
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -40,7 +41,7 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService userDetailsService() {
-        return username -> userDAO.findByUsername(username)
+        return username -> userRepository.findByUsername(username)
                 .map(user -> org.springframework.security.core.userdetails.User.builder()
                         .username(user.getUsername())
                         .password(user.getPassword())
