@@ -1,5 +1,6 @@
 package com.navansh.LearningSpringBoot.service.impl;
 
+import com.navansh.LearningSpringBoot.config.CacheConfig;
 import com.navansh.LearningSpringBoot.dto.AddStudentDTO;
 import com.navansh.LearningSpringBoot.dto.StudentDTO;
 import com.navansh.LearningSpringBoot.entity.Student;
@@ -7,16 +8,16 @@ import com.navansh.LearningSpringBoot.exception.BadRequestException;
 import com.navansh.LearningSpringBoot.exception.DuplicateResourceException;
 import com.navansh.LearningSpringBoot.exception.ResourceNotFoundException;
 import com.navansh.LearningSpringBoot.repository.StudentRepository;
+import com.navansh.LearningSpringBoot.service.CacheService;
 import com.navansh.LearningSpringBoot.service.StudentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
-import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 @Service
 @RequiredArgsConstructor
@@ -24,12 +25,15 @@ import java.util.logging.Logger;
 public class StudentServiceImplementation implements StudentService {
     private final StudentRepository studentRepository;
     private final ModelMapper modelMapper;
-    protected final Logger logger = (Logger) LoggerFactory.getLogger(StudentServiceImplementation.class);
-
+    private final CacheService cacheService;
     @Override
+    @Cacheable(
+            value = CacheConfig.ALL_STUDENTS_CACHE,
+            unless = "#result.isEmpty()",
+            condition = "@cacheService != null"
+    )
     public List<StudentDTO> getAllStudents(){
-
-        logger.info("Finding user by username: {}");
+        log.info("Cache miss fetching all students");
         List<Student> students = studentRepository.findAll();
         return students
                 .stream()
@@ -38,7 +42,13 @@ public class StudentServiceImplementation implements StudentService {
     }
 
     @Override
+    @Cacheable(
+            value = CacheConfig.STUDENT_CACHE,
+            key = "#id",
+            condition = "@cacheService != null"
+    )
     public StudentDTO getStudentById(Long id) {
+        log.info("Cache miss fetching students by id: "+id);
         Student student = studentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Student with id: " + id + " does not exist"));
         return modelMapper.map(student, StudentDTO.class);
@@ -53,6 +63,7 @@ public class StudentServiceImplementation implements StudentService {
         Student newStudent = modelMapper.map(addStudentDTO, Student.class);
         Student savedStudent = studentRepository.save(newStudent);  // Save returns Student with ID
         log.info("Student created successfully with ID: {}", savedStudent.getId());
+        cacheService.invalidateAllStudentsCache();
         return modelMapper.map(savedStudent, StudentDTO.class);  // Map the saved student
     }
 
@@ -63,6 +74,7 @@ public class StudentServiceImplementation implements StudentService {
         }
         studentRepository.deleteById(id);
         log.info("Student with ID: {} deleted successfully", id);
+        cacheService.invalidateAllStudentsCache();
     }
 
     @Override
@@ -79,6 +91,7 @@ public class StudentServiceImplementation implements StudentService {
         student.setEmail(addStudentDTO.getEmail());
         studentRepository.update(student);
         log.info("Student with ID: {} updated successfully", id);
+        cacheService.invalidateAllStudentsCache();
         return modelMapper.map(student, StudentDTO.class);
     }
 
@@ -108,6 +121,7 @@ public class StudentServiceImplementation implements StudentService {
 
         studentRepository.update(student);
         log.info("Student with ID: {} partially updated successfully", id);
+        cacheService.invalidateAllStudentsCache();
         return modelMapper.map(student, StudentDTO.class);
     }
 }
