@@ -7,8 +7,9 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheManager;
+import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-
+import java.time.Duration;
 /**
  * Redis Cache Configuration
  * Enables Spring Cache abstraction with Redis backend
@@ -22,10 +23,17 @@ public class CacheConfig {
 
     public static final String STUDENT_CACHE = "student"; //→ Cache key prefix for individual student by ID (e.g., "student::1")
     public static final String ALL_STUDENTS_CACHE = "allStudents"; //→ Cache key for list of all students
+
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory redisConnectionFactory) {
         log.info("Initializing Redis CacheManager with TTL");
-        return RedisCacheManager.create(redisConnectionFactory);
+        RedisCacheConfiguration config=RedisCacheConfiguration.defaultCacheConfig()
+                .entryTtl(Duration.ofMinutes(30))
+                .disableCachingNullValues();
+
+        return RedisCacheManager.builder(redisConnectionFactory)
+                .cacheDefaults(config)
+                .build();
     }
 
 }

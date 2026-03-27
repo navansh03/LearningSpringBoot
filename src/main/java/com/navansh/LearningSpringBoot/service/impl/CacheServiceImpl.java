@@ -41,8 +41,11 @@ public class CacheServiceImpl implements CacheService {
         }
 
         org.springframework.cache.Cache cache = cacheManager.getCache(CacheConfig.ALL_STUDENTS_CACHE);
+        org.springframework.cache.Cache cache2=cacheManager.getCache(CacheConfig.STUDENT_CACHE);
         if (cache != null) {
             cache.clear();
+            assert cache2 != null;
+            cache2.clear();
             log.info("Invalidated cache for all students");
         } else {
             log.warn("Cache '{}' not found in CacheManager", CacheConfig.ALL_STUDENTS_CACHE);

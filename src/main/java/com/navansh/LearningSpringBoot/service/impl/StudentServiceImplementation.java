@@ -13,6 +13,7 @@ import com.navansh.LearningSpringBoot.service.StudentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -25,12 +26,16 @@ import java.util.Map;
 public class StudentServiceImplementation implements StudentService {
     private final StudentRepository studentRepository;
     private final ModelMapper modelMapper;
-    private final CacheService cacheService;
+    private final ObjectProvider<CacheService> cacheServiceProvider;
+
+    private CacheService getCacheService() {
+        return cacheServiceProvider.getIfAvailable();
+    }
+
     @Override
     @Cacheable(
             value = CacheConfig.ALL_STUDENTS_CACHE,
-            unless = "#result.isEmpty()",
-            condition = "@cacheService != null"
+            unless = "#result.isEmpty()"
     )
     public List<StudentDTO> getAllStudents(){
         log.info("Cache miss fetching all students");
@@ -44,8 +49,7 @@ public class StudentServiceImplementation implements StudentService {
     @Override
     @Cacheable(
             value = CacheConfig.STUDENT_CACHE,
-            key = "#id",
-            condition = "@cacheService != null"
+            key = "#id"
     )
     public StudentDTO getStudentById(Long id) {
         log.info("Cache miss fetching students by id: "+id);
@@ -61,10 +65,15 @@ public class StudentServiceImplementation implements StudentService {
         }
 
         Student newStudent = modelMapper.map(addStudentDTO, Student.class);
-        Student savedStudent = studentRepository.save(newStudent);  // Save returns Student with ID
+        Student savedStudent = studentRepository.save(newStudent);
         log.info("Student created successfully with ID: {}", savedStudent.getId());
-        cacheService.invalidateAllStudentsCache();
-        return modelMapper.map(savedStudent, StudentDTO.class);  // Map the saved student
+
+        CacheService cacheService = getCacheService();
+        if (cacheService != null) {
+            cacheService.invalidateAllStudentsCache();
+        }
+
+        return modelMapper.map(savedStudent, StudentDTO.class);
     }
 
     @Override
@@ -74,7 +83,11 @@ public class StudentServiceImplementation implements StudentService {
         }
         studentRepository.deleteById(id);
         log.info("Student with ID: {} deleted successfully", id);
-        cacheService.invalidateAllStudentsCache();
+
+        CacheService cacheService = getCacheService();
+        if (cacheService != null) {
+            cacheService.invalidateAllStudentsCache();
+        }
     }
 
     @Override
@@ -91,7 +104,12 @@ public class StudentServiceImplementation implements StudentService {
         student.setEmail(addStudentDTO.getEmail());
         studentRepository.update(student);
         log.info("Student with ID: {} updated successfully", id);
-        cacheService.invalidateAllStudentsCache();
+
+        CacheService cacheService = getCacheService();
+        if (cacheService != null) {
+            cacheService.invalidateAllStudentsCache();
+        }
+
         return modelMapper.map(student, StudentDTO.class);
     }
 
@@ -121,7 +139,12 @@ public class StudentServiceImplementation implements StudentService {
 
         studentRepository.update(student);
         log.info("Student with ID: {} partially updated successfully", id);
-        cacheService.invalidateAllStudentsCache();
+
+        CacheService cacheService = getCacheService();
+        if (cacheService != null) {
+            cacheService.invalidateAllStudentsCache();
+        }
+
         return modelMapper.map(student, StudentDTO.class);
     }
 }
